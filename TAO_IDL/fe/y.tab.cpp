@@ -2348,17 +2348,19 @@ tao_yyreduce:
                                         tao_yyvsp[0].ihval->is_local (),
                                         tao_yyvsp[0].ihval->is_abstract ()
                                       );
-              AST_Interface::fwd_redefinition_helper (i,
-                                                      s);
+              AST_Interface::fwd_redefinition_helper (i, s);
               /*
                * Add the interface to its definition scope.
                */
               (void) s->fe_add_interface (i);
 
               // This FE_InterfaceHeader class isn't destroyed with the AST.
-              tao_yyvsp[0].ihval->name ()->destroy ();
-              delete tao_yyvsp[0].ihval;
-              tao_yyvsp[0].ihval = 0;
+              // Note: Don't destroy/delete the name - it's been transferred to the AST
+              if (tao_yyvsp[0].ihval != 0)
+                {
+                  delete tao_yyvsp[0].ihval;
+                  tao_yyvsp[0].ihval = 0;
+                }
             }
 
           /*
@@ -2433,10 +2435,14 @@ tao_yyreduce:
            * list of all interfaces which this interface inherits from,
            * recursively
            */
-          UTL_ScopedName n (tao_yyvsp[-1].idval,
-                            0);
+          // Allocate UTL_ScopedName on heap to avoid dangling pointer
+          // when passed to FE_InterfaceHeader (g++ compatibility fix)
+          UTL_ScopedName *n = 0;
+          ACE_NEW_RETURN (n,
+                         UTL_ScopedName (tao_yyvsp[-1].idval, 0),
+                         1);
           ACE_NEW_RETURN (tao_yyval.ihval,
-                          FE_InterfaceHeader (&n,
+                          FE_InterfaceHeader (n,
                                               tao_yyvsp[0].nlval,
                                               I_FALSE,
                                               I_FALSE,
@@ -2457,10 +2463,11 @@ tao_yyreduce:
            * list of all interfaces which this interface inherits from,
            * recursively
            */
-          UTL_ScopedName n (tao_yyvsp[-1].idval,
-                            0);
+          // Allocate on heap for g++ compatibility
+          UTL_ScopedName *n = 0;
+          ACE_NEW_RETURN (n, UTL_ScopedName (tao_yyvsp[-1].idval, 0), 1);
           ACE_NEW_RETURN (tao_yyval.ihval,
-                          FE_InterfaceHeader (&n,
+                          FE_InterfaceHeader (n,
                                               tao_yyvsp[0].nlval,
                                               I_TRUE,
                                               I_FALSE,
@@ -2481,10 +2488,11 @@ tao_yyreduce:
            * list of all interfaces which this interface inherits from,
            * recursively
            */
-          UTL_ScopedName n (tao_yyvsp[-1].idval,
-                            0);
+          // Allocate on heap for g++ compatibility
+          UTL_ScopedName *n = 0;
+          ACE_NEW_RETURN (n, UTL_ScopedName (tao_yyvsp[-1].idval, 0), 1);
           ACE_NEW_RETURN (tao_yyval.ihval,
-                          FE_InterfaceHeader (&n,
+                          FE_InterfaceHeader (n,
                                               tao_yyvsp[0].nlval,
                                               I_FALSE,
                                               I_TRUE,
