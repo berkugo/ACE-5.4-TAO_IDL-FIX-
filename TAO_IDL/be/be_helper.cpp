@@ -152,6 +152,18 @@ TAO_OutStream::file (void)
   return this->fp_;
 }
 
+// Close the underlying file handle and set fp_ to NULL
+// to prevent double close in destructor.
+void
+TAO_OutStream::close (void)
+{
+  if (this->fp_ != 0)
+    {
+      ACE_OS::fclose (this->fp_);
+      this->fp_ = 0;
+    }
+}
+
 int
 TAO_OutStream::incr_indent (unsigned short flag)
 {

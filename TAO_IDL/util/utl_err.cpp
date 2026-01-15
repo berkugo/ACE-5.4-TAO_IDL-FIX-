@@ -210,11 +210,20 @@ idl_error_header (UTL_Error::ErrorCode c,
                   long lineno,
                   UTL_String *s)
 {
+  const char *filename = "unknown";
+  if (idl_global->read_from_stdin ())
+    {
+      filename = "standard input";
+    }
+  else if (s != 0)
+    {
+      filename = s->get_string ();
+    }
+    
   ACE_ERROR ((LM_ERROR,
               "%s: \"%s\", line %d: %s",
               idl_global->prog_name (),
-              idl_global->read_from_stdin () ? "standard input"
-                                             : s->get_string (),
+              filename,
               lineno == -1 ? idl_global->lineno () : lineno,
               error_string (c)));
 }

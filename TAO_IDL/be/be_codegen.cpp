@@ -87,22 +87,23 @@ TAO_CodeGen::TAO_CodeGen (void)
 // destructor
 TAO_CodeGen::~TAO_CodeGen (void)
 {
-  delete this->client_header_;
-  delete this->server_header_;
-  delete this->implementation_header_;
-  delete this->implementation_skeleton_;
-  delete this->server_template_header_;
-  delete this->client_stubs_;
-  delete this->server_skeletons_;
-  delete this->server_template_skeletons_;
-  delete this->client_inline_;
-  delete this->server_inline_;
-  delete this->server_template_inline_;
-  delete this->anyop_header_;
-  delete this->anyop_source_;
+  // Delete streams with NULL check to prevent double free (g++ compatibility)
+  if (this->client_header_) { delete this->client_header_; this->client_header_ = 0; }
+  if (this->server_header_) { delete this->server_header_; this->server_header_ = 0; }
+  if (this->implementation_header_) { delete this->implementation_header_; this->implementation_header_ = 0; }
+  if (this->implementation_skeleton_) { delete this->implementation_skeleton_; this->implementation_skeleton_ = 0; }
+  if (this->server_template_header_) { delete this->server_template_header_; this->server_template_header_ = 0; }
+  if (this->client_stubs_) { delete this->client_stubs_; this->client_stubs_ = 0; }
+  if (this->server_skeletons_) { delete this->server_skeletons_; this->server_skeletons_ = 0; }
+  if (this->server_template_skeletons_) { delete this->server_template_skeletons_; this->server_template_skeletons_ = 0; }
+  if (this->client_inline_) { delete this->client_inline_; this->client_inline_ = 0; }
+  if (this->server_inline_) { delete this->server_inline_; this->server_inline_ = 0; }
+  if (this->server_template_inline_) { delete this->server_template_inline_; this->server_template_inline_ = 0; }
+  if (this->anyop_header_) { delete this->anyop_header_; this->anyop_header_ = 0; }
+  if (this->anyop_source_) { delete this->anyop_source_; this->anyop_source_ = 0; }
 #if !defined (linux) && !defined (__QNX__)
   // This causes a seg fault on Linux RH 5.1.  Let it leak . . .
-  delete this->gperf_input_stream_;
+  if (this->gperf_input_stream_) { delete this->gperf_input_stream_; this->gperf_input_stream_ = 0; }
 #endif /* ! linux */
   delete [] this->gperf_input_filename_;
   this->curr_os_ = 0;

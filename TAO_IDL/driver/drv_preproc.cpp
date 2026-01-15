@@ -67,6 +67,91 @@ trademarks or registered trademarks of Sun Microsystems, Inc.
 // Pass an IDL file through the C preprocessor
 
 #include "idl_bool.h"
+#include "ace/OS_NS_string.h"
+#include "ace/OS_NS_stdio.h"
+
+// Filter g++ preprocessor output for compatibility
+// Removes special directives like <built-in>, <command-line>, # 0, etc.
+static void
+DRV_filter_gcc_output (const char *filename)
+{
+  FILE *in = ACE_OS::fopen (filename, "r");
+  if (in == 0)
+    return;
+
+  // Read entire file into memory
+  ACE_OS::fseek (in, 0, SEEK_END);
+  long file_size = ACE_OS::ftell (in);
+  ACE_OS::fseek (in, 0, SEEK_SET);
+
+  if (file_size <= 0)
+    {
+      ACE_OS::fclose (in);
+      return;
+    }
+
+  char *buffer = new char[file_size + 1];
+  size_t bytes_read = ACE_OS::fread (buffer, 1, file_size, in);
+  buffer[bytes_read] = '\0';
+  ACE_OS::fclose (in);
+
+  // Write filtered output
+  FILE *out = ACE_OS::fopen (filename, "w");
+  if (out == 0)
+    {
+      delete[] buffer;
+      return;
+    }
+
+  char *line_start = buffer;
+  char *line_end;
+  
+  while ((line_end = ACE_OS::strchr (line_start, '\n')) != 0 || *line_start != '\0')
+    {
+      if (line_end == 0)
+        line_end = line_start + ACE_OS::strlen (line_start);
+      
+      char saved = *line_end;
+      *line_end = '\0';
+      
+      // Skip lines with g++ special markers
+      idl_bool skip = I_FALSE;
+      
+      if (ACE_OS::strstr (line_start, "<built-in>") != 0 ||
+          ACE_OS::strstr (line_start, "<command-line>") != 0 ||
+          ACE_OS::strstr (line_start, "stdc-predef.h") != 0)
+        {
+          skip = I_TRUE;
+        }
+      // Skip # 0 "..." lines (line number 0 is invalid)
+      else if (line_start[0] == '#' && line_start[1] == ' ' && line_start[2] == '0')
+        {
+          skip = I_TRUE;
+        }
+      
+      if (!skip)
+        {
+          // Remove trailing flags from # N "file" lines (e.g., "# 1 file.h 1 3 4" -> "# 1 file.h")
+          if (line_start[0] == '#' && line_start[1] == ' ')
+            {
+              char *quote_end = ACE_OS::strrchr (line_start, '"');
+              if (quote_end != 0 && quote_end[1] != '\0')
+                {
+                  quote_end[1] = '\0';
+                }
+            }
+          ACE_OS::fprintf (out, "%s\n", line_start);
+        }
+      
+      *line_end = saved;
+      if (saved == '\0')
+        break;
+      line_start = line_end + 1;
+    }
+
+  ACE_OS::fclose (out);
+  delete[] buffer;
+}
 #include "idl_defines.h"
 #include "global_extern.h"
 #include "fe_extern.h"
@@ -813,6 +898,9 @@ DRV_pre_proc (const char *myfile)
   // TODO: Manage problems in the pre-processor, in the previous
   // version the current process would exit if the pre-processor
   // returned with error.
+
+  // Filter g++ specific output for compatibility
+  DRV_filter_gcc_output (tmp_file);
 
   FILE *yyin = ACE_OS::fopen (tmp_file, "r");
 

@@ -120,6 +120,9 @@ public:
   FILE *file (void);
   // Return the underlying lowlevel file pointer.
 
+  void close (void);
+  // Close the file and set fp_ to NULL to prevent double close.
+
   int incr_indent (unsigned short flag = 1);
   // increment the indentation level and by default actually indent the output
   // accordingly

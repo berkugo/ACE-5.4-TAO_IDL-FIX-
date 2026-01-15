@@ -1571,14 +1571,8 @@ be_interface::gen_gperf_lookup_methods (const char *flat_name)
   // <open_temp_file> to  open the file now, so that the file will get
   // deleted once when we close the file.
 
-  // Close the file.
-  if (ACE_OS::fclose (tao_cg->gperf_input_stream ()->file ()) == -1)
-    {
-      ACE_ERROR_RETURN ((LM_ERROR,
-                         "%p:File close failed on temp gperf's input file\n",
-                         "fclose"),
-                        -1);
-    }
+  // Close the file using the stream's close method to properly reset fp_.
+  tao_cg->gperf_input_stream ()->close ();
 
   // Open the temp file.
   ACE_HANDLE input = ACE::open_temp_file (tao_cg->gperf_input_filename (),
